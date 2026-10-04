@@ -212,6 +212,10 @@ button{font:inherit;color:inherit}
 .sortie div{min-width:0}
 .sortie .btn{flex:none}
 .feuille .cadre-livre{max-width:none}
+.missions{display:grid;gap:4px;border-top:1px solid var(--trait);padding-top:10px}
+.missions ul{list-style:none;margin:0;padding:0;display:grid;gap:3px;font-size:.85rem}
+.missions li span[aria-hidden]{color:var(--laiton)}
+.missions li.fait{color:var(--brume)}
 </style>
 <div class="app">
   <header class="tete">
@@ -400,10 +404,17 @@ function jourLum(t) { const h = hDe(t); if (h < 6 || h >= 19.5) return 0; if (h 
 function hash(n) { n = Math.imul((n | 0) ^ 0x9e3779b9, 0x85ebca6b); n ^= n >>> 13; n = Math.imul(n, 0xc2b2ae35); n ^= n >>> 16; return (n >>> 0) / 4294967296; }
 function meteoDe(cle) { if (S && cle === S.cle1) return METEOS[1]; const x = hash(cle); return x < .22 ? METEOS[0] : x < .6 ? METEOS[1] : x < .84 ? METEOS[2] : METEOS[3]; }
 function pluie(t) {
-  let r = meteoDe(cleJour(t)).r + .12 * Math.sin(t / H * 1.3) * Math.sin(t / H * .37 + 1);
+  const m = meteoDe(cleJour(t)), ph = cleJour(t) % 7;
+  let r = m.r + .12 * Math.sin(t / H * 1.3) * Math.sin(t / H * .37 + 1);
+  if (m.id === 'averse' || m.id === 'orage') r += .24 * Math.pow(Math.max(0, Math.sin(t / H * 2.3 + ph)), 3) - .08;
+  else if (m.id === 'pluie') r += .14 * Math.pow(Math.max(0, Math.sin(t / H * 1.7 + ph)), 4);
   if (S.nuit && S.nuit.qui === 'AU' && S.nuit.statut === 'frappe') r = Math.max(r, .82);
   if (t < S.douce) r *= .55;
   return clamp(r, .12, 1);
+}
+function motPluie(t) {
+  const r = pluie(t), orage = meteoDe(cleJour(t)).id === 'orage';
+  return r < .3 ? 'Bruine' : r < .55 ? 'Pluie' : r < .78 ? 'Averse' : orage ? 'Orage' : 'Déluge';
 }
 function prochaine(t, heure) { const d = new Date(t); d.setHours(heure, 0, 0, 0); if (d.getTime() <= t + MIN) d.setDate(d.getDate() + 1); return d.getTime(); }
 const prochain6h = t => prochaine(t, 6);
@@ -683,6 +694,7 @@ function recolter(i) {
   if (k.type === 'bois') {
     const n = meteoDe(cleJour(k.debut)).id === 'orage' ? 3 : 4;
     txt = `Tu rentres du bûcher, les bras chargés : ${n} bûches.` + gagnerBois(n);
+    S.boisJour = S.jourCle;
     sonBuche();
   } else if (k.type === 'riviere') {
     if (!S.livres.B) { ajouterLivre('B', t); txt = 'Au bord de la rivière en crue, coincé entre deux pierres, un petit livre de toile, trempé. Tu le rapportes et le poses sur la table.'; log(t, 'Tu as trouvé un petit livre de toile à la rivière, trempé.', 'livre'); }
@@ -1036,17 +1048,46 @@ function rVeillee() {
       <div class="barre ombre" role="meter" aria-label="L’ombre" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${Math.round(o)}"><i style="width:${o}%"></i></div>
       ${S.perdues.length ? `<button type="button" class="btn second" data-act="zone" data-arg="${S.perdues[0]}">▲ ${S.perdues.length} pièce${S.perdues.length > 1 ? 's' : ''} perdue${S.perdues.length > 1 ? 's' : ''}</button>` : ''}</div>
   </div>`;
-  const notes = [motOmbre(o)];
+  const notes = o >= 40 ? [motOmbre(o)] : [];
   if (t < S.protege) notes.push('Le Traité tient la nuit dehors jusqu’à l’aube.');
   if (dansMaison('D') && S.livres.D.notes.toucher) notes.push('Le livre aux pages tièdes semble l’attirer.');
   const enCours = S.taches.filter(k => !k.pret), B = S.livres.B;
   for (const k of enCours) notes.push(`${k.type === 'cire' ? 'Une bougie prend dans le moule' : 'Tu es parti vers ' + SORTIES[k.type].vers} : <span class="minuteur" data-fin="${k.fin}"></span>.`);
   if (B && B.lieu === 'sechage') notes.push(S.feu > 15 ? `Le livre de toile sèche : encore ${fmtDuree(3 * H - (B.sech || 0))}.` : 'Le livre de toile ne sèche plus : le feu est trop bas.');
-  h += `<p class="discret">${notes.join(' ')}</p>`;
+  if (notes.length) h += `<p class="discret">${notes.join(' ')}</p>`;
   h += `<div class="actions3"><button type="button" class="btn" data-act="porte">${nuit ? 'La porte' : 'Sortir'}</button><button type="button" class="btn second" data-act="fenetre">Dehors</button><button type="button" class="btn second" data-act="trappe">La cave</button></div>`;
-  const suivant = GESTES.find(g => !S.gestes[g[0]]);
-  if (suivant) h += `<p class="prochain"><b>Premier geste à faire :</b> ${suivant[1]}.</p>`;
+  const mi = missions();
+  h += `<div class="missions"><h3>Missions</h3><ul>${mi.map(m => `<li class="${m.fait ? 'fait' : ''}"><span aria-hidden="true">${m.fait ? '✓' : m.histoire ? '✦' : '○'}</span> ${m.txt}${m.fait ? ' <span class="discret">(fait)</span>' : ''}</li>`).join('')}</ul></div>`;
   return h;
+}
+
+function objectif() {
+  const L = S.livres, ev = S.ev, R = S.resolus;
+  if (!L.B) return 'Aller voir ce que charrie la rivière, de jour.';
+  if (!L.B.sec) return L.B.lieu === 'sechage' ? 'Garder le feu assez haut pour que le livre de toile sèche.' : 'Faire sécher le petit livre de toile près du feu.';
+  if (!R.G && !ev.c2) return 'La nuit, quelqu’un gratte : trouver l’histoire qui sent la terre.';
+  if (!ev.c2) return 'Attendre la prochaine lettre du corbeau, demain matin.';
+  if (S.corbeau) return 'Le corbeau attend à la fenêtre.';
+  if (!L.C) return 'Trouver le chêne qui a perdu sa voix.';
+  if (!R.BG) return 'Rendre sa fin à celui qui l’a perdue, quand il frappera.';
+  if (!ev.D) return 'Attendre le matin. Quelque chose remue dans la cave.';
+  if (dansMaison('D')) return 'Décider quoi faire du livre trouvé sur la table. Relis le registre.';
+  if (!S.visites.AU) return 'Tenir la nuit. Méfie-toi de celui qui frappe trois fois.';
+  if (!L.F) return 'Attendre. On glissera peut-être quelque chose sous la porte.';
+  if (!L.F.complet) return 'Le livre mince attend qu’on lui rende ses pages.';
+  if (!ev.fin) return 'Lire le livre mince, maintenant complet.';
+  return null;
+}
+function missions() {
+  const t = now(), h = hDe(t), m = [];
+  const geste = GESTES.find(g => !S.gestes[g[0]]);
+  if (geste) m.push({txt: geste[1] + '.'});
+  const o = objectif();
+  if (o) m.push({txt: o, histoire: true});
+  if (S.livres.A) m.push({txt: 'Noter la pluie du jour dans l’almanach.', fait: S.almanach === S.jourCle});
+  if (h >= 17 || h < 6) m.push({txt: 'Un feu vif pour la nuit (au-dessus de la moitié).', fait: S.feu >= 60});
+  else m.push({txt: 'Rentrer du bois du bûcher.', fait: S.boisJour === S.jourCle});
+  return m;
 }
 
 const vuExamen = {};
@@ -1124,7 +1165,7 @@ function majMinuteurs() {
 }
 function majTete() {
   const t = now();
-  $('horloge').textContent = `Jour ${S.jour} · ${fmtH(t)} · ${NOM_PHASE[phase(t)]} · ${meteoDe(cleJour(t)).nom}`;
+  $('horloge').textContent = `Jour ${S.jour} · ${fmtH(t)} · ${NOM_PHASE[phase(t)]} · ${motPluie(t)}`;
   const d = S.decalage || 0;
   $('decalage-info').textContent = d > MIN ? `La maison a ${fmtDuree(d)} d’avance sur ton heure.` : 'La maison est à ton heure.';
 }
@@ -1793,14 +1834,16 @@ setInterval(() => {
   const rafale = .88 + .12 * Math.sin(p / 5300) * Math.sin(p / 2300 + 1);
   const lisse = x => { x = clamp(x); return x * x * (3 - 2 * x); };
   const dehors = vue === 'dehors' ? 1 : 0;
-  A.pDouce.gain.setTargetAtTime((.55 + .25 * (1 - r)) * rafale, ct, 3);
-  A.pForte.gain.setTargetAtTime((.75 * lisse((r - .45) / .45) + .25 * dehors) * rafale, ct, 3);
-  A.toit.gain.setTargetAtTime((.18 + .5 * r) * (1 - .6 * dehors), ct, 3);
-  A.vitre.gain.setTargetAtTime((.22 + .25 * r) * (1 - .7 * dehors), ct, 3);
-  A.pluieBus.frequency.setTargetAtTime(dehors ? 9000 : 5200, ct, 1);
+  // quatre paliers : bruine (gouttes sur la vitre), pluie (pluie douce et toit), averse (pluie forte), déluge (tout, plus le vent)
+  const bruine = 1 - lisse((r - .25) / .2), averse = lisse((r - .55) / .25), deluge = lisse((r - .78) / .15);
+  A.pDouce.gain.setTargetAtTime((.2 + .65 * lisse((r - .2) / .2)) * (1 - .45 * averse) * rafale, ct, 2.5);
+  A.pForte.gain.setTargetAtTime((.95 * averse + .25 * dehors * lisse((r - .3) / .3)) * rafale, ct, 2.5);
+  A.toit.gain.setTargetAtTime((.04 + .45 * lisse((r - .3) / .35) + .3 * deluge) * (1 - .6 * dehors), ct, 2.5);
+  A.vitre.gain.setTargetAtTime((.15 + .4 * bruine + .2 * averse) * (1 - .7 * dehors), ct, 2.5);
+  A.pluieBus.frequency.setTargetAtTime(dehors ? 9000 : 3600 + 2600 * r, ct, 1.5);
   A.feu.gain.setTargetAtTime(S.engloutie ? 0 : (f > 0 ? .1 + .6 * f : 0) * (1 - .6 * dehors), ct, 2);
   A.horloge.gain.setTargetAtTime(S.engloutie ? 0 : .08 * (1 - dehors), ct, 2);
-  A.vent.gain.setTargetAtTime(.06 + .3 * (1 - L) + (meteoDe(cleJour(t)).id === 'orage' ? .15 : 0) + .2 * dehors, ct, 4);
+  A.vent.gain.setTargetAtTime(.06 + .3 * (1 - L) + .3 * deluge + .2 * dehors, ct, 4);
   A.drone.gain.setTargetAtTime(Math.pow(clamp((o - .2) / .8), 2) * .5, ct, 3);
   if (o > .72 && p > A.prochainBat) { const k = (o - .72) / .28; ton(A.gNuit, 50, {vol: .14 + .1 * k, dur: .18}); ton(A.gNuit, 46, {vol: .1 + .08 * k, dur: .16, t0: .28}); A.prochainBat = p + 1400 - 450 * k; }
   const N = S.nuit;
