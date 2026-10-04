@@ -56,9 +56,23 @@ h2{font-family:var(--f-titre);font-weight:400;font-size:1.55rem;margin:0;line-he
 .stat.pluie .val{color:var(--pluie);font-family:var(--f-titre);font-style:italic}
 .barre{display:flex;justify-content:space-between;align-items:center;gap:10px 20px;flex-wrap:wrap}
 .son{display:flex;align-items:center;flex-wrap:wrap;gap:8px;font-size:.85rem;color:var(--brume)}
-#btn-son,#btn-mus{font:inherit;color:var(--parchemin);background:var(--ardoise);border:1px solid var(--pluie);border-radius:3px;padding:4px 14px;cursor:pointer}
-#btn-son[aria-pressed="true"],#btn-mus[aria-pressed="true"]{background:var(--ardoise-2);color:var(--pluie)}
-#vol-son{accent-color:var(--pluie);width:110px}
+.tete{position:relative}
+.btn-sons{position:absolute;top:0;right:0;width:40px;height:40px;display:grid;place-items:center;border-radius:50%;border:1px solid var(--trait);background:var(--ardoise);color:var(--brume);cursor:pointer;padding:0}
+.btn-sons:hover,.btn-sons[aria-expanded="true"]{color:var(--parchemin);border-color:var(--pluie)}
+.btn-sons svg{width:20px;height:20px}
+.btn-sons .barre-off{display:none}
+.btn-sons.muet .barre-off{display:inline}
+.btn-sons.muet .ondes{display:none}
+.reglages{position:absolute;top:48px;right:0;z-index:30;width:min(300px,calc(100vw - 32px));background:var(--ardoise);border:1px solid var(--trait);border-radius:6px;box-shadow:0 10px 30px rgba(0,0,0,.5);padding:12px 14px;display:grid;gap:4px}
+.reglages h2{font-size:1.1rem;margin:0 0 4px}
+.interr{font:inherit;display:flex;justify-content:space-between;align-items:center;gap:10px;width:100%;text-align:left;padding:7px 0;background:none;border:0;border-top:1px solid var(--trait);color:var(--parchemin);cursor:pointer}
+.interr small{display:block;font-size:.74rem;color:var(--brume)}
+.interr .pill{flex:none;min-width:3.2em;text-align:center;font-size:.76rem;border:1px solid var(--trait);border-radius:99px;padding:2px 8px;color:var(--brume)}
+.interr[aria-pressed="true"] .pill{border-color:var(--pluie);color:var(--pluie)}
+.interr.maitre{border-top:0;font-weight:600}
+.vol{display:grid;gap:4px;padding-top:8px;border-top:1px solid var(--trait);font-size:.84rem;color:var(--brume)}
+#vol-son{accent-color:var(--pluie);width:100%}
+.titre{padding-right:48px}
 .mode{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:.85rem;color:var(--brume)}
 .mode button{font:inherit;color:var(--parchemin);background:var(--ardoise);border:1px solid var(--trait);border-radius:3px;padding:3px 12px;cursor:pointer}
 .mode button[aria-pressed="true"]{border-color:var(--braise);background:var(--ardoise-2);color:var(--braise-pale)}
@@ -202,7 +216,7 @@ button:focus-visible{outline:2px solid var(--braise);outline-offset:2px}
 .revele{animation:revele .8s ease-out}
 @keyframes revele{from{opacity:.2;transform:translateY(6px)}to{opacity:1;transform:none}}
 @media (prefers-reduced-motion:reduce){.revele{animation:none}.piste i{transition:none}}
-@media (max-width:640px){.wrap{padding-inline:12px}#vol-son{width:86px}}
+@media (max-width:640px){.wrap{padding-inline:12px}}
 @media (prefers-reduced-motion:reduce){.jalon i,.lo-jauge i{transition:none}}
 </style>
 </head>
@@ -211,6 +225,19 @@ button:focus-visible{outline:2px solid var(--braise);outline-offset:2px}
 
 <div class="wrap">
   <header class="tete">
+    <button type="button" class="btn-sons" id="btn-sons" aria-expanded="false" aria-controls="reglages" aria-label="Réglages du son">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z" fill="currentColor" fill-opacity=".15"/><g class="ondes"><path d="M15.5 9a4 4 0 0 1 0 6"/><path d="M18 6.5a7.5 7.5 0 0 1 0 11"/></g><g class="barre-off"><path d="M16 9.5l5 5M21 9.5l-5 5"/></g></svg>
+    </button>
+    <div class="reglages" id="reglages" hidden>
+      <h2>Le son</h2>
+      <button type="button" class="interr maitre" data-son="general" aria-pressed="true"><span>Son</span><span class="pill"></span></button>
+      <button type="button" class="interr" data-son="pluie" aria-pressed="true"><span>La pluie<small>Feuilles, toit, vitres, du crachin au déluge</small></span><span class="pill"></span></button>
+      <button type="button" class="interr" data-son="maison" aria-pressed="true"><span>Le feu et la maison<small>Crépitements, gouttière, pages qui tournent</small></span><span class="pill"></span></button>
+      <button type="button" class="interr" data-son="nuit" aria-pressed="true"><span>Les bruits de la nuit<small>Vent, hibou, rôdeurs aux volets, tonnerre</small></span><span class="pill"></span></button>
+      <button type="button" class="interr" data-son="musique" aria-pressed="true"><span>La boîte à musique<small>Quelques notes douces, de temps en temps</small></span><span class="pill"></span></button>
+      <button type="button" class="interr" data-son="actions" aria-pressed="true"><span>Les sons des actions<small>Achats, livre terminé, hiver</small></span><span class="pill"></span></button>
+      <label class="vol" for="vol-son">Volume<input type="range" id="vol-son" min="0" max="100" value="60"></label>
+    </div>
     <div class="titre"><img class="icone" src="data:image/webp;base64,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" alt=""><h1>La Veillée</h1></div>
     <p class="accroche">Il pleut sur la forêt depuis aussi longtemps qu'on s'en souvienne. Tant que le feu brûle, on lit. Tant que la maison tient, rien n'entre.</p>
     <div class="histoire" id="histoire" hidden>
@@ -263,12 +290,6 @@ button:focus-visible{outline:2px solid var(--braise);outline-offset:2px}
       <button type="button" id="m-1" data-m="1" aria-pressed="true">1</button>
       <button type="button" id="m-10" data-m="10" aria-pressed="false">10</button>
       <button type="button" id="m-max" data-m="max" aria-pressed="false">Max</button>
-    </div>
-    <div class="son">
-      <button type="button" id="btn-son" aria-pressed="false">Écouter la pluie</button>
-      <button type="button" id="btn-mus" aria-pressed="true">Musique : oui</button>
-      <label for="vol-son">Volume</label>
-      <input type="range" id="vol-son" min="0" max="100" value="60">
     </div>
   </div>
 
@@ -761,8 +782,8 @@ function acheterNoeud(a) {
   sonRenaissanceDouce();
   rendu();
 }
-function sonRenaissanceDouce() { if (typeof A !== 'undefined' && A && A.actif) [587.3, 880].forEach((f, i) => ton(A.dedans, f, {vol: .05, dur: 1.2, t0: i * .15})); }
-function sonLivre() { if (typeof A !== 'undefined' && A && A.actif) { feuilleTournee(); [440, 554.4, 659.3, 880].forEach((f, i) => ton(A.dedans, f, {vol: .05, dur: 1.6, t0: .2 + i * .18})); } }
+function sonRenaissanceDouce() { if (typeof A !== 'undefined' && A && A.actif) [587.3, 880].forEach((f, i) => ton(A.actions, f, {vol: .05, dur: 1.2, t0: i * .15})); }
+function sonLivre() { if (typeof A !== 'undefined' && A && A.actif) { feuilleTournee(); [440, 554.4, 659.3, 880].forEach((f, i) => ton(A.actions, f, {vol: .05, dur: 1.6, t0: .2 + i * .18})); } }
 
 let renArme = 0;
 // Les souvenirs viennent des livres terminés : plus un livre est profond dans l'histoire, plus il en laisse, et un fragment jamais lu en ajoute un.
@@ -772,7 +793,7 @@ function renaissance() {
   if (k < 1) return;
   if (Date.now() - renArme > 4000) { renArme = Date.now(); rendu(); return; }
   const vie = S.vie; vie.veillees++;
-  const pref = {son: S.son, musique: S.musique, vol: S.vol, mode: S.mode, part: S.part, lampes: S.lampes};
+  const pref = {son: S.son, musique: S.musique, sons: S.sons, vol: S.vol, mode: S.mode, part: S.part, lampes: S.lampes};
   S = Object.assign(neuf(S.souv + k, vie, S.arbre), pref);
   S.livre = 'buches';
   S.vie.tuto = Math.max(S.vie.tuto, 5);
@@ -950,7 +971,7 @@ function onglets(t, R) {
 let resetArme = 0;
 function reinitialiser() {
   if (Date.now() - resetArme > 4000) { resetArme = Date.now(); $('btn-reset').classList.add('arme'); $('btn-reset').textContent = 'Confirmer : tout effacer, souvenirs compris'; setTimeout(() => { $('btn-reset').classList.remove('arme'); $('btn-reset').textContent = 'Recommencer à zéro'; }, 4000); return; }
-  const pref = {son: S.son, musique: S.musique, vol: S.vol};
+  const pref = {son: S.son, musique: S.musique, sons: S.sons, vol: S.vol};
   S = Object.assign(neuf(), pref);
   bestCle = ''; etagereCle = ''; fragCle = ''; arbreCle = '';
   for (const id in lignes) lignes[id].el.hidden = true;
@@ -1386,15 +1407,21 @@ function initSon() {
   a.maitre.connect(comp); comp.connect(ctx.destination);
   // pièce : réverbération courte et chaude pour l'intérieur
   a.piece = reverb(ctx, 2.2, 3); const retour = ctx.createGain(); retour.gain.value = .35; a.piece.connect(retour); retour.connect(a.maitre);
-  a.dedans = ctx.createGain(); a.dedans.connect(a.maitre); a.dedans.connect(a.piece);
-  a.musiqueBus = ctx.createGain(); a.musiqueBus.gain.value = 0; a.musiqueBus.connect(a.dedans);
+  // une piste par famille de sons, pour pouvoir couper chacune dans les réglages
+  const piste = () => { const g = ctx.createGain(); g.connect(a.maitre); g.connect(a.piece); return g; };
+  a.gMaison = piste(); a.gActions = piste(); a.gMusique = piste();
+  a.gPluie = ctx.createGain(); a.gPluie.connect(a.maitre);
+  a.gNuit = ctx.createGain(); a.gNuit.connect(a.maitre);
+  a.dedans = ctx.createGain(); a.dedans.connect(a.gMaison);
+  a.actions = ctx.createGain(); a.actions.connect(a.gActions);
+  a.musiqueBus = ctx.createGain(); a.musiqueBus.gain.value = 1; a.musiqueBus.connect(a.gMusique);
   // longueurs différentes et premières entre elles : les boucles ne se recalent jamais ensemble
   a.rose = bruit(ctx, 13, 'rose'); a.brun = bruit(ctx, 17, 'brun');
   // Toute la pluie passe par un bus étouffé : on l'entend depuis l'intérieur, à travers les murs et le toit.
   a.pluieBus = ctx.createBiquadFilter(); a.pluieBus.type = 'lowpass'; a.pluieBus.frequency.value = 2600; a.pluieBus.Q.value = .4;
   const aigus = ctx.createBiquadFilter(); aigus.type = 'highshelf'; aigus.frequency.value = 1500; aigus.gain.value = -9;
   const chaleur = ctx.createBiquadFilter(); chaleur.type = 'lowshelf'; chaleur.frequency.value = 300; chaleur.gain.value = 4;
-  a.pluieBus.connect(aigus); aigus.connect(chaleur); chaleur.connect(a.maitre);
+  a.pluieBus.connect(aigus); aigus.connect(chaleur); chaleur.connect(a.gPluie);
   const P = a.pluieBus;
   // quatre pluies, du crachin au déluge, toutes dans les médiums et les graves
   a.pluies = {
@@ -1418,11 +1445,11 @@ function initSon() {
   };
   // le toit, entendu de l'intérieur : un tambourinement sourd et enveloppant
   a.pluieToit = boucle(a, a.brun, P, [['lowpass', 450], ['highpass', 50]], 0);
-  a.vitre = boucle(a, crepitis(ctx, 15.7, {taux: 14, amp: .35, dec: .008, fMin: 900, fMax: 1600, ton: .9}), a.dedans, [['lowpass', 2000]], 0);
+  a.vitre = boucle(a, crepitis(ctx, 15.7, {taux: 14, amp: .35, dec: .008, fMin: 900, fMax: 1600, ton: .9}), a.pluieBus, [['lowpass', 2000]], 0);
   a.feuSouffle = boucle(a, a.brun, a.dedans, [['bandpass', 240, .7]], 0);
-  a.vent = boucle(a, a.rose, a.maitre, [['bandpass', 380, 7]], 0);
+  a.vent = boucle(a, a.rose, a.gNuit, [['bandpass', 380, 7]], 0);
   // bourdon grave, seulement la nuit
-  a.bourdon = ctx.createGain(); a.bourdon.gain.value = 0; a.bourdon.connect(a.maitre);
+  a.bourdon = ctx.createGain(); a.bourdon.gain.value = 0; a.bourdon.connect(a.gNuit);
   const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 200; lp.connect(a.bourdon);
   for (const f of [55, 82.4, 110.3]) { const o = ctx.createOscillator(); o.type = 'triangle'; o.frequency.value = f; o.detune.value = Math.random() * 8 - 4; o.connect(lp); o.start(); }
   a.prochaineNote = 0; a.prochaineGoutte = 0; a.nuitVue = S.nuitEnCours;
@@ -1453,16 +1480,16 @@ function crepitement(fort) {
 function goutteGouttiere() { ton(A.dedans, 480 + Math.random() * 60, {vol: .04, dur: .18, glisse: .6}); }
 function goutteFeuille() { ton(A.pluieBus, 600 + Math.random() * 700, {vol: .025 + Math.random() * .02, dur: .1, glisse: .6}); }
 function feuilleTournee() { eclat(A.rose, A.dedans, {f: 3500, q: .7, vol: .05, att: .06, dur: .18, glisse: .5}); }
-function grattement() { for (let i = 0; i < 3 + Math.floor(Math.random() * 4); i++) eclat(A.rose, A.maitre, {f: 2600 + Math.random() * 1500, q: 4, vol: .09, att: .03, dur: .07, t0: i * .11, pan: Math.random() < .5 ? -.5 : .5}); }
+function grattement() { for (let i = 0; i < 3 + Math.floor(Math.random() * 4); i++) eclat(A.rose, A.gNuit, {f: 2600 + Math.random() * 1500, q: 4, vol: .09, att: .03, dur: .07, t0: i * .11, pan: Math.random() < .5 ? -.5 : .5}); }
 function hibou() {
   const f = 360 + Math.random() * 30, pan = Math.random() * 1.4 - .7;
-  for (const [t0, d] of [[0, .35], [.55, .2], [.85, .55]]) ton(A.maitre, f, {vol: .045, dur: d, att: .08, glisse: .9, t0, type: 'sine'});
+  for (const [t0, d] of [[0, .35], [.55, .2], [.85, .55]]) ton(A.gNuit, f, {vol: .045, dur: d, att: .08, glisse: .9, t0, type: 'sine'});
 }
 function tonnerre() {
   if (!A || !A.actif) return;
   const t0 = .4 + Math.random() * 1.5;
-  eclat(A.brun, A.maitre, {type: 'lowpass', f: 420, glisse: .15, vol: .9, att: .15, dur: 4.2, t0});
-  eclat(A.brun, A.maitre, {type: 'lowpass', f: 900, vol: .4, att: .01, dur: .4, t0: t0 + .05});
+  eclat(A.brun, A.gNuit, {type: 'lowpass', f: 420, glisse: .15, vol: .9, att: .15, dur: 4.2, t0});
+  eclat(A.brun, A.gNuit, {type: 'lowpass', f: 900, vol: .4, att: .01, dur: .4, t0: t0 + .05});
 }
 // boîte à musique : notes douces en ré majeur pentatonique
 const GAMME = [293.7, 329.6, 370, 440, 493.9, 587.3, 659.3, 740, 880];
@@ -1482,52 +1509,74 @@ function note() {
 function sonAchat(g) {
   if (!A || !A.actif) return;
   if (g.col === 'livres') feuilleTournee();
-  else if (g.col === 'foret') { eclat(A.brun, A.dedans, {f: 220, q: 3, vol: .4, dur: .08}); eclat(A.rose, A.dedans, {f: 1200, q: 2, vol: .08, dur: .03}); }
-  else { eclat(A.brun, A.dedans, {f: 120, q: 2, vol: .5, dur: .14}); ton(A.dedans, 95, {vol: .08, dur: .2}); }
+  else if (g.col === 'foret') { eclat(A.brun, A.actions, {f: 220, q: 3, vol: .4, dur: .08}); eclat(A.rose, A.actions, {f: 1200, q: 2, vol: .08, dur: .03}); }
+  else { eclat(A.brun, A.actions, {f: 120, q: 2, vol: .5, dur: .14}); ton(A.actions, 95, {vol: .08, dur: .2}); }
 }
 function sonRenaissance() {
   if (!A || !A.actif) return;
   eclat(A.rose, A.maitre, {type: 'lowpass', f: 3000, glisse: .1, vol: .2, att: .6, dur: 1.8});
-  [440, 587.3, 740, 880].forEach((f, i) => ton(A.dedans, f, {vol: .05, dur: 2, t0: .8 + i * .25}));
+  [440, 587.3, 740, 880].forEach((f, i) => ton(A.actions, f, {vol: .05, dur: 2, t0: .8 + i * .25}));
 }
 
 function volume() { return Number($('vol-son').value) / 100; }
+const PISTES = {pluie: 'gPluie', maison: 'gMaison', nuit: 'gNuit', musique: 'gMusique', actions: 'gActions'};
+function sons() { S.sons = Object.assign({pluie: true, maison: true, nuit: true, musique: S.musique !== false, actions: true}, S.sons || {}); return S.sons; }
+function appliquerPistes(lent) {
+  if (!A) return;
+  const t = A.ctx.currentTime, so = sons();
+  for (const k in PISTES) A[PISTES[k]].gain.setTargetAtTime(so[k] ? 1 : 0, t, lent ? .6 : .15);
+}
 function majBoutons() {
-  const actif = !!(A && A.actif);
-  $('btn-son').setAttribute('aria-pressed', String(actif));
-  $('btn-son').textContent = actif ? 'Couper le son' : (S.son ? 'Reprendre la pluie' : 'Écouter la pluie');
-  $('btn-mus').setAttribute('aria-pressed', String(S.musique !== false));
-  $('btn-mus').textContent = S.musique !== false ? 'Musique : oui' : 'Musique : non';
+  const actif = S.son !== false, so = sons();
+  $('btn-sons').classList.toggle('muet', !actif);
+  $('btn-sons').setAttribute('aria-label', actif ? 'Réglages du son (son activé)' : 'Réglages du son (son coupé)');
+  document.querySelectorAll('.interr').forEach(b => {
+    const k = b.dataset.son, on = k === 'general' ? actif : so[k];
+    b.setAttribute('aria-pressed', String(on));
+    b.querySelector('.pill').textContent = on ? 'oui' : 'non';
+    if (k !== 'general') b.disabled = !actif;
+  });
 }
 function demarrer() {
   if (!A) A = initSon();
-  if (!A) { $('btn-son').textContent = 'Son indisponible ici'; $('btn-son').disabled = true; return; }
-  A.actif = true; A.ctx.resume();
+  if (!A) return;
+  A.actif = true;
+  const p = A.ctx.resume(); if (p && p.catch) p.catch(() => {});
+  appliquerPistes(false);
   A.maitre.gain.setTargetAtTime(volume(), A.ctx.currentTime, .8);
-  A.musiqueBus.gain.setTargetAtTime(S.musique !== false ? 1 : 0, A.ctx.currentTime, .5);
-  S.son = true; majBoutons();
 }
-function arreter() {
-  if (A) { A.actif = false; A.maitre.gain.setTargetAtTime(0, A.ctx.currentTime, .3); }
-  S.son = false; majBoutons();
-}
-$('btn-son').addEventListener('click', () => (A && A.actif) ? arreter() : demarrer());
-$('btn-mus').addEventListener('click', () => {
-  S.musique = S.musique === false;
-  if (A) A.musiqueBus.gain.setTargetAtTime(S.musique ? 1 : 0, A.ctx.currentTime, .5);
-  majBoutons();
+function arreter() { if (A) { A.actif = false; A.maitre.gain.setTargetAtTime(0, A.ctx.currentTime, .3); } }
+$('btn-sons').addEventListener('click', e => {
+  e.stopPropagation();
+  const ouvert = $('reglages').hidden;
+  $('reglages').hidden = !ouvert; $('btn-sons').setAttribute('aria-expanded', String(ouvert));
 });
+document.addEventListener('click', e => { if (!$('reglages').hidden && !e.target.closest('#reglages, #btn-sons')) { $('reglages').hidden = true; $('btn-sons').setAttribute('aria-expanded', 'false'); } });
+document.querySelectorAll('.interr').forEach(b => b.addEventListener('click', () => {
+  const k = b.dataset.son;
+  if (k === 'general') { S.son = S.son === false; S.son ? demarrer() : arreter(); }
+  else { const so = sons(); so[k] = !so[k]; if (k === 'musique') S.musique = so[k]; appliquerPistes(false); }
+  majBoutons();
+}));
 $('vol-son').value = S.vol != null ? S.vol : 60;
 $('vol-son').addEventListener('input', () => {
   S.vol = Number($('vol-son').value);
   if (A && A.actif) A.maitre.gain.setTargetAtTime(volume(), A.ctx.currentTime, .1);
 });
-// si le son était allumé à la dernière visite, il reprend au premier geste
-if (S.son) document.addEventListener('pointerdown', function relance(e) {
-  document.removeEventListener('pointerdown', relance);
-  if (e.target.closest && e.target.closest('#btn-son')) return;
-  if (!(A && A.actif)) demarrer();
-});
+// Le son part tout de suite. Dans l'appli Android, c'est immédiat ; dans un navigateur, qui bloque le son
+// tant qu'on n'a pas touché la page, il démarre au tout premier geste, où qu'il soit.
+if (S.son !== false) {
+  demarrer();
+  const debloquer = () => {
+    if (S.son === false) return fin();
+    if (!A) demarrer();
+    if (A && A.ctx.state !== 'running') { const p = A.ctx.resume(); if (p && p.catch) p.catch(() => {}); }
+    if (A && A.ctx.state === 'running') fin();
+  };
+  const evts = ['pointerdown', 'touchstart', 'keydown', 'click'];
+  function fin() { evts.forEach(ev => document.removeEventListener(ev, debloquer, true)); }
+  evts.forEach(ev => document.addEventListener(ev, debloquer, true));
+}
 majBoutons();
 
 setInterval(() => {
@@ -1551,9 +1600,9 @@ setInterval(() => {
   // gouttière : un goutte-à-goutte régulier près de la fenêtre
   if (now > A.prochaineGoutte) { goutteGouttiere(); A.prochaineGoutte = now + 1300 + Math.random() * 700 - 500 * r; }
   if (R.pagesBase > 0 && S.feu && Math.random() < .012) feuilleTournee();
-  if (now > A.prochaineNote) { if (S.musique !== false) note(); A.prochaineNote = now + 1400 + Math.random() * 2600; }
+  if (now > A.prochaineNote) { if (sons().musique) note(); A.prochaineNote = now + 1400 + Math.random() * 2600; }
   if (S.nuitEnCours && !A.nuitVue) hibou();
-  if (!S.nuitEnCours && A.nuitVue) [587.3, 740, 880, 1174.7].forEach((f, i) => ton(A.dedans, f, {vol: .045, dur: 1.6, t0: i * .2}));
+  if (!S.nuitEnCours && A.nuitVue) [587.3, 740, 880, 1174.7].forEach((f, i) => ton(A.gNuit, f, {vol: .045, dur: 1.6, t0: i * .2}));
   A.nuitVue = S.nuitEnCours;
   if (n > .8 && Math.random() < .004) hibou();
   if (S.nuitEnCours && !R.tient && Math.random() < .06) grattement();
