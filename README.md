@@ -19,3 +19,7 @@ Pour mettre le jeu à jour : remplacer `www/index.html`, commit, push. L'APK sui
 La clé `android/app/laveillee.keystore` est commitée volontairement : elle garantit que chaque APK peut remplacer le précédent. Elle ne doit pas servir pour une publication sur le Play Store.
 
 Les polices viennent de Google Fonts : sans connexion, le jeu utilise des polices de secours, tout le reste fonctionne hors ligne.
+
+## Sons
+
+Les ambiances enregistrées (pluie, feu, vent dans les arbres, hibou, tonnerre, horloge) viennent du projet open source [Moodist](https://github.com/remvze/moodist), sous licence CC0 ou Pixabay Content License. Elles ont été recoupées en boucles sans couture et intégrées au fichier du jeu. Les autres sons (boîte à musique, pages, achats, rôdeurs aux volets) sont synthétisés dans le navigateur.
