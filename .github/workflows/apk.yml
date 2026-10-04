@@ -39,7 +39,7 @@ jobs:
           set -o pipefail
           if ! ./gradlew assembleRelease --no-daemon --console=plain 2>&1 | tee build.log; then
             # remonte la fin du journal en annotations, lisibles même sans accès aux logs complets
-            grep -E "error|What went wrong|Exception|failed|> " build.log | tail -25 | while IFS= read -r l; do echo "::error::$l"; done
+            { grep -nE "error:|warning: \[|e: " build.log | head -15; sed -n '/What went wrong/,/\* Try/p' build.log | head -25; grep -n "Value is null" -B6 build.log | head -20; } | while IFS= read -r l; do echo "::error::$l"; done
             exit 1
           fi
           cp app/build/outputs/apk/release/app-release.apk "../La-Veillee-1.0.${{ github.run_number }}.apk"
