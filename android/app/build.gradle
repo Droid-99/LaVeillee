@@ -8,7 +8,7 @@ android {
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         // Le numéro de build GitHub Actions sert de version : chaque APK s'installe par-dessus le précédent
-        versionCode (System.getenv("VERSION_CODE") ?: "1").toInteger()
+        versionCode Integer.parseInt(System.getenv("VERSION_CODE") ?: "1")
         versionName "1.0." + (System.getenv("VERSION_CODE") ?: "0")
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
