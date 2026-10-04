@@ -2,9 +2,9 @@
   "appId": "fr.droid99.laveillee",
   "appName": "La Veillée",
   "webDir": "www",
-  "backgroundColor": "#0f1517",
+  "backgroundColor": "#0d1112",
   "android": {
-    "backgroundColor": "#0f1517",
+    "backgroundColor": "#0d1112",
     "adjustMarginsForEdgeToEdge": "force"
   }
 }

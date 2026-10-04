@@ -1,6 +1,6 @@
 # La Veillée
 
-Jeu idle incrémental, cosy et pluvieux : une maison au milieu de la forêt, un feu de cheminée, des livres à lire, et des rôdeurs mignons qui tournent autour de la maison chaque nuit.
+Un refuge sombre et pluvieux qui vit à ton heure. Une maison perdue dans la forêt, un feu à garder, un chat, un corbeau qui apporte des lettres, des livres étranges à identifier d'après le registre d'Odile, et des visiteurs qui frappent la nuit. Le matin et le soir n'offrent pas les mêmes choses. Si le feu s'éteint trop longtemps, les ténèbres prennent la maison, pièce par pièce.
 
 ## Installer l'APK sur Android
 
@@ -10,7 +10,7 @@ Jeu idle incrémental, cosy et pluvieux : une maison au milieu de la forêt, un 
 
 ## Comment c'est construit
 
-- `www/index.html` : tout le jeu, en un seul fichier (code, sons synthétisés, illustrations intégrées).
+- `www/index.html` : tout le jeu, en un seul fichier (code, sons, illustrations intégrées).
 - [Capacitor](https://capacitorjs.com) emballe ce fichier dans une appli Android (`android/`).
 - À chaque push sur `main`, GitHub Actions construit l'APK signé et le publie dans une release (`.github/workflows/apk.yml`).
 
@@ -22,4 +22,4 @@ Les polices viennent de Google Fonts : sans connexion, le jeu utilise des police
 
 ## Sons
 
-Les ambiances enregistrées (pluie, feu, vent dans les arbres, hibou, tonnerre, horloge) viennent du projet open source [Moodist](https://github.com/remvze/moodist), sous licence CC0 ou Pixabay Content License. Elles ont été recoupées en boucles sans couture et intégrées au fichier du jeu. Les autres sons (boîte à musique, pages, achats, rôdeurs aux volets) sont synthétisés dans le navigateur.
+Les ambiances enregistrées (pluie, feu, vent dans les arbres, hibou, tonnerre, horloge) viennent du projet open source [Moodist](https://github.com/remvze/moodist), sous licence CC0 ou Pixabay Content License. Elles ont été recoupées en boucles sans couture et intégrées au fichier du jeu. Les autres sons (boîte à musique, pages, coups à la porte, corbeau, chat, bourdon des ténèbres) sont synthétisés dans le navigateur. Les illustrations ont été générées avec ChatGPT.
