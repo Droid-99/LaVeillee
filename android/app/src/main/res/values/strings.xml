@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">La Veillée</string>
+    <string name="title_activity_main">La Veillée</string>
+    <string name="package_name">fr.droid99.laveillee</string>
+    <string name="custom_url_scheme">fr.droid99.laveillee</string>
+</resources>
