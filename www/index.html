@@ -355,9 +355,9 @@ const ZONES = [
 const nomZone = id => ZONES.find(z => z.id === id).nom;
 
 const SORTIES = {
-  bois: {nom: 'Le bûcher', vers: 'le bûcher', duree: 45 * MIN, court: 'Quatre bûches, trois par orage.', desc: 'Fendre quelques bûches sous l’appentis et les rapporter. Quatre bûches, trois par temps d’orage.'},
-  riviere: {nom: 'La rivière', vers: 'la rivière', duree: 60 * MIN, court: 'La berge en crue charrie des choses.', desc: 'Longer la berge en crue. Elle charrie parfois des choses.'},
-  chene: {nom: 'La lisière des chênes', vers: 'la lisière', duree: 60 * MIN, court: 'Du bois mort sous les vieux chênes.', desc: 'Les vieux chênes, au bord de la clairière. On y trouve du bois mort.'},
+  bois: {nom: 'Le bûcher', vers: 'le bûcher', de: 'du bûcher', duree: 45 * MIN, court: 'Quatre bûches, trois par orage.', desc: 'Fendre quelques bûches sous l’appentis et les rapporter. Quatre bûches, trois par temps d’orage.'},
+  riviere: {nom: 'La rivière', vers: 'la rivière', de: 'de la rivière', duree: 60 * MIN, court: 'La berge en crue charrie des choses.', desc: 'Longer la berge en crue. Elle charrie parfois des choses.'},
+  chene: {nom: 'La lisière des chênes', vers: 'la lisière', de: 'de la lisière', duree: 60 * MIN, court: 'Du bois mort sous les vieux chênes.', desc: 'Les vieux chênes, au bord de la clairière. On y trouve du bois mort.'},
 };
 const CHENES = {
   corbeaux: {nom: 'Le chêne aux corbeaux', d: 'Ils y croassent du matin au soir.'},
@@ -519,7 +519,7 @@ function avancer(t, dt) {
   for (const k of S.taches.slice()) {
     if (k.pret || t < k.fin) continue;
     if (k.type === 'cire') { S.taches.splice(S.taches.indexOf(k), 1); S.bougies++; log(t, 'Une bougie neuve a pris dans le moule, près du feu.'); }
-    else { k.pret = true; log(t, `Tu es de retour de ${SORTIES[k.type].vers}.`, 'retour'); }
+    else { k.pret = true; log(t, `Tu es de retour ${SORTIES[k.type].de}.`, 'retour'); }
   }
   ajOmbre(tauxOmbre(t) * dt, t);
 }
@@ -1012,7 +1012,7 @@ function attentions(t) {
   const a = [], N = S.nuit;
   if (N && N.statut === 'frappe') a.push({txt: VIS[N.qui].arrivee, act: 'porte', btn: 'Aller à la porte'});
   if (S.corbeau) a.push(perdue('fenetre') ? {txt: 'Le corbeau attend dehors, mais l’ombre couvre la fenêtre.'} : {txt: 'Le corbeau attend à la fenêtre, une lettre à la patte.', act: 'lettre', btn: 'Prendre la lettre'});
-  S.taches.forEach((k, i) => { if (k.pret) a.push({txt: `Tu es de retour de ${SORTIES[k.type].vers}.`, act: 'recolter', arg: i, btn: 'Défaire ton sac'}); });
+  S.taches.forEach((k, i) => { if (k.pret) a.push({txt: `Tu es de retour ${SORTIES[k.type].de}.`, act: 'recolter', arg: i, btn: 'Défaire ton sac'}); });
   if (S.nouveau && S.livres[S.nouveau]) a.push({txt: 'Un livre attend sur la table.', act: 'onglet', arg: 'table', btn: 'L’examiner'});
   if (S.feu < 25 && S.buches > 0) a.push({txt: S.feu <= 0 ? 'Le feu est éteint.' : 'Le feu faiblit.', act: 'buche', btn: 'Une bûche'});
   const B = S.livres.B;
@@ -1815,6 +1815,7 @@ setInterval(() => {
 S = lireSauvegarde();
 let premier = false;
 if (!S) { S = etatNeuf(Date.now()); premier = true; }
+S.jx.forEach(e => { e.x = e.x.replace('de retour de le bûcher', 'de retour du bûcher'); });
 $('vol-son').value = S.vol != null ? S.vol : 60;
 const depuis = S.vu;
 simuler(now(), true);
