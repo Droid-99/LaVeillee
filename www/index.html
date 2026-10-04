@@ -178,6 +178,40 @@ button{font:inherit;color:inherit}
   .carnet{border-top:0;border-left:1px solid var(--trait)}
 }
 @media (prefers-reduced-motion:reduce){.cadre-livre .couv{transition:none}}
+
+/* carnet compact : chaque onglet tient dans l'écran sans glisser */
+.vue{gap:12px;padding-top:12px}
+.etat3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.carte{display:grid;gap:6px;align-content:start;padding:8px;border:1px solid var(--trait);border-radius:4px;background:var(--bois-2);min-width:0}
+.carte .val{font-size:.76rem;color:var(--brume);line-height:1.3;min-height:2.6em}
+.carte .btn{width:100%;padding:6px 4px;font-size:.8rem}
+.actions3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.actions3 .btn{padding:7px 4px}
+.prochain{font-size:.84rem;color:var(--brume);border-top:1px solid var(--trait);padding-top:10px}
+.prochain b{font-weight:600;color:var(--papier)}
+.attentions li{padding:7px 10px}
+.livre-haut{display:grid;grid-template-columns:minmax(0,38%) minmax(0,1fr);gap:12px;align-items:start}
+.vignette{display:block;position:relative;padding:0;width:100%;aspect-ratio:1;border:1px solid var(--trait);border-radius:4px;overflow:hidden;cursor:zoom-in;background:#000}
+.vignette .couv{position:absolute;inset:0}
+.vignette .loupe{position:absolute;right:4px;bottom:4px;font-size:.7rem;padding:1px 6px;border-radius:99px;background:rgba(13,17,18,.8)}
+.livre-infos{display:grid;gap:8px;min-width:0}
+.livre-infos .discret{font-size:.78rem;line-height:1.35}
+.etiquette select{width:100%}
+.examens .btn[aria-pressed="true"]{border-color:var(--papier);background:#2c231b;color:var(--papier)}
+.note-exam{min-height:4.6em;font-size:.9rem;padding:8px 10px;border-left:2px solid var(--laiton);background:var(--bois-2);max-width:62ch}
+.note-exam b{display:block;font-weight:600;font-size:.74rem;letter-spacing:.06em;text-transform:uppercase;color:var(--laiton)}
+.registre{display:grid;gap:0}
+.registre details{border-bottom:1px solid var(--trait);padding:9px 0}
+.registre summary{cursor:pointer;font-family:var(--f-titre);font-size:1.08rem;list-style:none}
+.registre summary::-webkit-details-marker{display:none}
+.registre summary::before{content:"+ ";color:var(--laiton)}
+.registre details[open] summary::before{content:"− "}
+.registre details p{margin-top:6px;max-width:66ch}
+.sorties{gap:8px}
+.sortie{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 10px}
+.sortie div{min-width:0}
+.sortie .btn{flex:none}
+.feuille .cadre-livre{max-width:none}
 </style>
 <div class="app">
   <header class="tete">
@@ -321,9 +355,9 @@ const ZONES = [
 const nomZone = id => ZONES.find(z => z.id === id).nom;
 
 const SORTIES = {
-  bois: {nom: 'Le bûcher', vers: 'le bûcher', duree: 45 * MIN, desc: 'Fendre quelques bûches sous l’appentis et les rapporter. Quatre bûches, trois par temps d’orage.'},
-  riviere: {nom: 'La rivière', vers: 'la rivière', duree: 60 * MIN, desc: 'Longer la berge en crue. Elle charrie parfois des choses.'},
-  chene: {nom: 'La lisière des chênes', vers: 'la lisière', duree: 60 * MIN, desc: 'Les vieux chênes, au bord de la clairière. On y trouve du bois mort.'},
+  bois: {nom: 'Le bûcher', vers: 'le bûcher', duree: 45 * MIN, court: 'Quatre bûches, trois par orage.', desc: 'Fendre quelques bûches sous l’appentis et les rapporter. Quatre bûches, trois par temps d’orage.'},
+  riviere: {nom: 'La rivière', vers: 'la rivière', duree: 60 * MIN, court: 'La berge en crue charrie des choses.', desc: 'Longer la berge en crue. Elle charrie parfois des choses.'},
+  chene: {nom: 'La lisière des chênes', vers: 'la lisière', duree: 60 * MIN, court: 'Du bois mort sous les vieux chênes.', desc: 'Les vieux chênes, au bord de la clairière. On y trouve du bois mort.'},
 };
 const CHENES = {
   corbeaux: {nom: 'Le chêne aux corbeaux', d: 'Ils y croassent du matin au soir.'},
@@ -684,7 +718,7 @@ function exTexte(id, k) {
 function examiner(k) {
   const id = S.courant; if (!id) return;
   const l = S.livres[id];
-  l.notes[k] = 1;
+  l.notes[k] = 1; vuExamen[id] = k;
   if (S.nouveau === id) S.nouveau = null;
   if (k === 'feuilleter' || k === 'toucher') feuilleTournee(); else sonPapier();
   rendre();
@@ -991,51 +1025,44 @@ function rVeillee() {
   let h = `<p class="ambiance">${ambiance(t)}</p>`;
   const at = attentions(t);
   if (at.length) h += `<ul class="attentions">${at.map(x => `<li><span>${x.txt}</span>${x.btn ? `<button type="button" class="btn" data-act="${x.act}" data-arg="${x.arg != null ? x.arg : ''}">${x.btn}</button>` : ''}</li>`).join('')}</ul>`;
-  h += `<div class="jauges">
-    <div class="jauge"><div class="j-tete"><h3>Le feu</h3><span>${motFeu(f)}${f > 0 ? ' · encore ' + fmtDuree(f / 6 * H) : ''}</span></div>
+  const bougieTxt = S.bougieOn ? 'allumée, ' + fmtDuree(S.bougieReste) : S.bougieReste > 0 ? 'soufflée' : 'éteinte';
+  h += `<div class="etat3">
+    <div class="carte"><h3>Le feu</h3><span class="val">${motFeu(f)}${f > 0 ? ' · ' + fmtDuree(f / 6 * H) : ''}</span>
       <div class="barre" role="meter" aria-label="Le feu" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${Math.round(f)}"><i style="width:${f}%"></i></div>
-      <div class="j-actions"><button type="button" class="btn" data-act="buche" ${S.buches && f < 96 ? '' : 'disabled'}>Ajouter une bûche</button><span class="stock">${S.buches} bûche${S.buches > 1 ? 's' : ''} dans le panier (12 au plus)</span></div></div>
-    <div class="jauge"><div class="j-tete"><h3>La bougie</h3><span>${S.bougieOn ? 'allumée · encore ' + fmtDuree(S.bougieReste) : S.bougieReste > 0 ? 'soufflée · il lui reste ' + fmtDuree(S.bougieReste) : 'éteinte'}</span></div>
-      <div class="j-actions"><button type="button" class="btn ${S.bougieOn ? 'second' : ''}" data-act="bougie" ${!S.bougieOn && S.bougieReste <= 0 && S.bougies < 1 ? 'disabled' : ''}>${S.bougieOn ? 'La souffler' : 'L’allumer'}</button><button type="button" class="btn second" data-act="cire" ${S.bouts >= 2 ? '' : 'disabled'}>Fondre deux bouts de cire</button><span class="stock">${S.bougies} bougie${S.bougies > 1 ? 's' : ''} neuve${S.bougies > 1 ? 's' : ''}, ${S.bouts} bout${S.bouts > 1 ? 's' : ''} de cire</span></div></div>
-    <div class="jauge"><div class="j-tete"><h3>L’ombre</h3><span>${Math.round(o)} sur 100 · ${r > .2 ? 'elle avance' : r < -.2 ? 'elle recule' : 'elle hésite'}</span></div>
+      <button type="button" class="btn" data-act="buche" ${S.buches && f < 96 ? '' : 'disabled'}>Bûche (${S.buches})</button></div>
+    <div class="carte"><h3>La bougie</h3><span class="val">${bougieTxt} · ${S.bougies} neuve${S.bougies > 1 ? 's' : ''}, ${S.bouts} bout${S.bouts > 1 ? 's' : ''}</span>
+      ${S.bouts >= 2 && !S.bougieOn ? '<button type="button" class="btn second" data-act="cire">Fondre la cire</button>' : `<button type="button" class="btn ${S.bougieOn ? 'second' : ''}" data-act="bougie" ${!S.bougieOn && S.bougieReste <= 0 && S.bougies < 1 ? 'disabled' : ''}>${S.bougieOn ? 'Souffler' : 'Allumer'}</button>`}</div>
+    <div class="carte"><h3>L’ombre</h3><span class="val">${Math.round(o)}/100 · ${r > .2 ? 'avance' : r < -.2 ? 'recule' : 'hésite'}</span>
       <div class="barre ombre" role="meter" aria-label="L’ombre" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${Math.round(o)}"><i style="width:${o}%"></i></div>
-      <p class="discret">${motOmbre(o)} ${t < S.protege ? 'Le Traité tient la nuit dehors jusqu’à l’aube.' : ''} ${dansMaison('D') && S.livres.D.notes.toucher ? 'Le livre aux pages tièdes semble l’attirer.' : ''}</p>
-      ${S.perdues.length ? `<ul class="perdues">${S.perdues.map(z => `<li><span>▲ Les ténèbres ont pris ${nomZone(z)}.</span><button type="button" class="btn second" data-act="zone" data-arg="${z}">Reprendre</button></li>`).join('')}</ul>` : ''}
-    </div></div>`;
-  const enCours = S.taches.filter(k => !k.pret);
-  const B = S.livres.B;
-  if (enCours.length || (B && B.lieu === 'sechage')) {
-    h += `<div class="jauge"><h3>En cours</h3><ul class="taches">`;
-    for (const k of enCours) h += `<li><span>${k.type === 'cire' ? 'Une bougie prend dans le moule' : 'Tu es parti vers ' + SORTIES[k.type].vers}</span><span class="minuteur" data-fin="${k.fin}"></span></li>`;
-    if (B && B.lieu === 'sechage') h += `<li><span>Le petit livre de toile sèche près du feu${S.feu > 15 ? '' : ' (le feu est trop bas, il ne sèche plus)'}</span><span class="minuteur">${fmtDuree(3 * H - (B.sech || 0))}</span></li>`;
-    h += `</ul></div>`;
-  }
-  h += `<div class="rangee"><button type="button" class="btn" data-act="porte">${nuit ? 'Écouter à la porte' : 'Sortir (jusqu’à 19 h)'}</button><button type="button" class="btn second" data-act="fenetre">Regarder dehors</button><button type="button" class="btn second" data-act="trappe">La trappe de la cave</button></div>`;
-  const faits = GESTES.filter(g => S.gestes[g[0]]).length;
-  if (faits < GESTES.length) h += `<div class="gestes"><h3>Premiers gestes</h3><ol>${GESTES.map(g => `<li class="${S.gestes[g[0]] ? 'fait' : ''}">${g[1]}</li>`).join('')}</ol><p class="discret">La maison vit à ton heure, même quand tu n’es pas là. Le matin et le soir n’y offrent pas les mêmes choses.</p></div>`;
+      ${S.perdues.length ? `<button type="button" class="btn second" data-act="zone" data-arg="${S.perdues[0]}">▲ ${S.perdues.length} pièce${S.perdues.length > 1 ? 's' : ''} perdue${S.perdues.length > 1 ? 's' : ''}</button>` : ''}</div>
+  </div>`;
+  const notes = [motOmbre(o)];
+  if (t < S.protege) notes.push('Le Traité tient la nuit dehors jusqu’à l’aube.');
+  if (dansMaison('D') && S.livres.D.notes.toucher) notes.push('Le livre aux pages tièdes semble l’attirer.');
+  const enCours = S.taches.filter(k => !k.pret), B = S.livres.B;
+  for (const k of enCours) notes.push(`${k.type === 'cire' ? 'Une bougie prend dans le moule' : 'Tu es parti vers ' + SORTIES[k.type].vers} : <span class="minuteur" data-fin="${k.fin}"></span>.`);
+  if (B && B.lieu === 'sechage') notes.push(S.feu > 15 ? `Le livre de toile sèche : encore ${fmtDuree(3 * H - (B.sech || 0))}.` : 'Le livre de toile ne sèche plus : le feu est trop bas.');
+  h += `<p class="discret">${notes.join(' ')}</p>`;
+  h += `<div class="actions3"><button type="button" class="btn" data-act="porte">${nuit ? 'La porte' : 'Sortir'}</button><button type="button" class="btn second" data-act="fenetre">Dehors</button><button type="button" class="btn second" data-act="trappe">La cave</button></div>`;
+  const suivant = GESTES.find(g => !S.gestes[g[0]]);
+  if (suivant) h += `<p class="prochain"><b>Premier geste à faire :</b> ${suivant[1]}.</p>`;
   return h;
 }
 
+const vuExamen = {};
 function rTable() {
   const id = S.courant;
-  if (!id || !S.livres[id]) return `<h2>La table</h2><p class="ambiance">La table est vide. Un rond de tasse, une plume, un peu de cire.</p><p>Choisis un livre sur l’étagère pour le poser ici et l’examiner.</p><div class="rangee"><button type="button" class="btn" data-act="onglet" data-arg="etagere">Aller à l’étagère</button></div>`;
-  const l = S.livres[id], L = LIVRES[id];
-  const notes = EXAMENS.filter(([k]) => l.notes[k]);
-  let h = `<div class="livre-vue">
-    <button type="button" class="cadre-livre" data-act="zoom" aria-label="Approcher le livre"><span class="couv couv-${id}"></span><span class="loupe">toucher pour approcher</span></button>
-    <div><p class="discret">${L.origine}</p>${l.etiq ? `<p class="etiq-affiche">${titreReg(l.etiq)}</p>` : '<p>Pas encore d’étiquette.</p>'}</div>
-    <div class="examens">${EXAMENS.map(([k, n]) => `<button type="button" class="btn" data-act="examiner" data-arg="${k}" aria-pressed="${!!l.notes[k]}">${n}</button>`).join('')}</div>
-    ${notes.length ? `<ul class="notes">${notes.map(([k, n]) => `<li><b>${n}</b>${exTexte(id, k)}</li>`).join('')}</ul>` : '<p class="discret">Regarde-le, touche-le, sens-le. Puis compare avec le registre d’Odile.</p>'}
-    <label class="etiquette" for="sel-etiq">L’étiquette que tu lui donnes
-      <select id="sel-etiq"><option value="">Je ne sais pas encore</option>${REG.map(r => `<option value="${r.id}" ${l.etiq === r.id ? 'selected' : ''}>${r.titre}</option>`).join('')}</select></label>
-    <div class="rangee">
-      <button type="button" class="btn" data-act="lire" ${id === 'B' && !l.sec ? 'disabled' : ''}>Le lire</button>
-      ${id === 'B' && !l.sec && l.lieu !== 'sechage' ? '<button type="button" class="btn" data-act="secher">Le faire sécher près du feu</button>' : ''}
-      ${l.lieu === 'sechage' ? `<span class="stock">Il sèche près du feu : encore ${fmtDuree(3 * H - (l.sech || 0))} de bon feu.</span>` : ''}
-      <button type="button" class="btn second" data-act="coffre-mettre" data-arg="${id}">L’enfermer dans le coffre de la cave</button>
-      <button type="button" class="btn second" data-act="onglet" data-arg="registre">Ouvrir le registre</button>
-    </div></div>`;
-  return h;
+  if (!id || !S.livres[id]) return `<h2>La table</h2><p class="ambiance">La table est vide. Un rond de tasse, une plume, un peu de cire.</p><div class="rangee"><button type="button" class="btn" data-act="onglet" data-arg="etagere">Choisir un livre sur l’étagère</button></div>`;
+  const l = S.livres[id], L = LIVRES[id], k = vuExamen[id];
+  return `<div class="livre-haut">
+      <button type="button" class="vignette" data-act="agrandir" aria-label="Voir le livre en grand"><span class="couv couv-${id}"></span><span class="loupe">agrandir</span></button>
+      <div class="livre-infos"><p class="discret">${L.origine}</p>
+        <label class="etiquette" for="sel-etiq">Étiquette<select id="sel-etiq"><option value="">Je ne sais pas encore</option>${REG.map(r => `<option value="${r.id}" ${l.etiq === r.id ? 'selected' : ''}>${r.titre}</option>`).join('')}</select></label>
+        <div class="rangee"><button type="button" class="btn" data-act="lire" ${id === 'B' && !l.sec ? 'disabled' : ''}>Lire</button><button type="button" class="btn second" data-act="onglet" data-arg="registre">Registre</button></div>
+      </div></div>
+    <div class="examens">${EXAMENS.map(([e, n]) => `<button type="button" class="btn" data-act="examiner" data-arg="${e}" aria-pressed="${k === e}">${l.notes[e] ? '✓ ' : ''}${n}</button>`).join('')}</div>
+    <p class="note-exam">${k ? `<b>${EXAMENS.find(x => x[0] === k)[1]}</b>${exTexte(id, k)}` : 'Touche un aspect du livre pour l’examiner, puis compare avec le registre d’Odile.'}</p>
+    <div class="rangee">${id === 'B' && !l.sec && l.lieu !== 'sechage' ? '<button type="button" class="btn" data-act="secher">Faire sécher près du feu</button>' : ''}${l.lieu === 'sechage' ? `<span class="stock">Sèche près du feu : encore ${fmtDuree(3 * H - (l.sech || 0))}.</span>` : ''}<button type="button" class="btn second" data-act="coffre-mettre" data-arg="${id}">Enfermer dans le coffre</button></div>`;
 }
 
 function rEtagere() {
@@ -1052,8 +1079,8 @@ function rEtagere() {
 }
 
 function rRegistre() {
-  return `<h2>Le registre d’Odile</h2><p class="discret">Écrit à la main. Certaines fiches sont incomplètes ; Odile avoue parfois ne pas savoir.</p>
-    <ol class="registre">${REG.map(r => `<li><h3>${r.titre}</h3><p class="desc">${r.desc}</p><p class="odile">« ${r.note} »</p></li>`).join('')}</ol>`;
+  return `<h2>Le registre d’Odile</h2><p class="discret">Touche une fiche pour la lire. Odile avoue parfois ne pas savoir.</p>
+    <div class="registre">${REG.map(r => `<details><summary>${r.titre}</summary><p class="desc">${r.desc}</p><p class="odile">« ${r.note} »</p></details>`).join('')}</div>`;
 }
 
 function rJournal() {
@@ -1066,9 +1093,9 @@ function rDehors() {
   if (nuit) return `<h2>Par la fenêtre</h2><p class="ambiance">La forêt est noire. La pluie brille un instant dans la lumière qui sort de la maison, puis plus rien. Sous les arbres, des yeux s’allument et s’éteignent.</p><p>On ne sort pas la nuit. Le bûcher, la rivière et les chênes attendront le jour.</p><div class="rangee"><button type="button" class="btn" data-act="rentrer">Revenir près du feu</button></div>`;
   const sortie = S.taches.find(k => k.sortie);
   const chene = S.ev.c2 && !S.livres.C;
-  let h = `<h2>Dehors</h2><p class="ambiance">La pluie te trouve en trois pas. L’air sent la mousse, la fumée, la terre retournée.</p>`;
+  let h = `<h2>Dehors</h2><p class="ambiance">La pluie te trouve en trois pas. L’air sent la mousse et la fumée.</p>`;
   if (sortie) h += `<p>${sortie.pret ? 'Tu es de retour, ton sac est plein.' : `Tu es déjà en chemin vers ${SORTIES[sortie.type].vers}. Retour dans <span class="minuteur" data-fin="${sortie.fin}"></span>.`}</p>`;
-  h += `<div class="sorties">${Object.entries(SORTIES).map(([k, s]) => `<div class="sortie"><h3>${s.nom}</h3><p>${k === 'chene' && chene ? 'Trois vieux chênes bordent la clairière. Le corbeau parlait de l’un d’eux.' : s.desc}</p><div class="rangee"><button type="button" class="btn" data-act="${k === 'chene' && chene ? 'chenes' : 'partir'}" data-arg="${k}" ${sortie ? 'disabled' : ''}>Y aller (${fmtDuree(s.duree)})</button></div></div>`).join('')}</div>`;
+  h += `<div class="sorties">${Object.entries(SORTIES).map(([k, s]) => `<div class="sortie"><div><h3>${s.nom}</h3><p>${k === 'chene' && chene ? 'Le corbeau parlait de l’un d’eux.' : s.court}</p></div><button type="button" class="btn" data-act="${k === 'chene' && chene ? 'chenes' : 'partir'}" data-arg="${k}" ${sortie ? 'disabled' : ''}>${fmtDuree(s.duree)}</button></div>`).join('')}</div>`;
   h += `<div class="rangee"><button type="button" class="btn second" data-act="rentrer">Rentrer</button></div>`;
   return h;
 }
@@ -1172,6 +1199,7 @@ document.addEventListener('click', e => {
     case 'chenes': feuilleChenes(); break;
     case 'recolter': recolter(+arg); break;
     case 'examiner': examiner(arg); break;
+    case 'agrandir': ouvrirFeuille(`<button type="button" class="cadre-livre" data-act="zoom" aria-label="Approcher le livre"><span class="couv couv-${S.courant}"></span><span class="loupe">toucher pour approcher</span></button><div class="rangee"><button type="button" class="btn" data-act="fermer">Reposer le livre</button></div>`); break;
     case 'zoom': b.classList.toggle('zoom'); b.querySelector('.loupe').textContent = b.classList.contains('zoom') ? 'toucher pour reculer' : 'toucher pour approcher'; break;
     case 'lire': lireCourant(); break;
     case 'secher': mettreSecher(); break;
